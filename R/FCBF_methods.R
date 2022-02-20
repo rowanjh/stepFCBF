@@ -1,31 +1,59 @@
-# Prep method
+#' Prep method
+#' @importFrom recipes prep
+#' @export
+#'
 prep.step_FCBF <- function (x, training, info = NULL, ...) {
-    pred_cols <- info %>% dplyr::filter(role == 'predictor') %>% dplyr::pull(variable)
-    outcome_col <- info %>% dplyr::filter(role == 'outcome') %>% dplyr::pull(variable)
+    # Find outcome column
+    if(!is.na(x$outcome)){
+        if(class(x$outcome) != "character"){
+            rlang::abort("Outcome variable for step_FCBF must be supplied as a character string")
+        }
+        if(length(x$outcome) > 1){
+            rlang::abort("Only a single outcome variable can be supplied for step_FCBF")
+        }
+        outcome_col <- x$outcome
+    } else{
+        outcome_col <- info %>% dplyr::filter(role == 'outcome') %>% dplyr::pull(variable)
+        if(length(outcome_col)>1){
+            rlang::abort("step_FCBF found more than one outcome variable. Only a single outcome variable can be accepted by FCBF. Please supply the outcome variable using the outcome argument in step_FCBF")
+        }
+    }
+    if(length(outcome_col)<1|is.na(outcome_col)){
+        rlang::abort(paste("An outcome varaible was not found by step_FCBF. Please",
+                           "ensure an outcome variable is specified."))
+    }
+    # Get predictor columns to be used in FCBF
+    pred_cols <- recipes_eval_select(x$terms, training, info)
 
-    if(length(outcome_col)>1){
-        rlang::abort("More than one outcome variable input to prep.step_FCBF")
+    if (length(pred_cols) <= 1) {
+        # this message is not given by FCBF::fcbf when only 1 predictor is selected by the filter
+        rlang::warn("Fewer than two predictors were supplied to step_FCBF, FCBF will not be conducted")
     }
-    if (length(pred_cols) > 1) {
-        fcbf_out <- FCBF_helper(preds = training[, pred_cols],
-                                outcome = training[, outcome_col, drop = TRUE],
-                                min_su = x$min_su)
-        cols_selected <- rownames(fcbf_out)
-    }
-    else {
-        message("FCBF skipped: not enough predictors were detected (<2)")
-        cols_selected <- pred_cols
-    }
-    keep_cols <- c(cols_selected, outcome_col)
-    step_FCBF_new(terms = x$terms, role = x$role, trained = TRUE,
-                  min_su = x$min_su,
-                  keep_cols = keep_cols, skip = x$skip, id = x$id)
+    fcbf_out <- FCBF_helper(preds = training[, pred_cols],
+                            outcome = training[, outcome_col, drop = TRUE],
+                            min_su = x$min_su)
+    cols_selected <- pred_cols[fcbf_out$index]
+    if(length(cols_selected) == 1) print("Number of features selected =  1")
+
+    # Specify which cols to remove from the training set
+    remove_cols <- pred_cols[!pred_cols %in% cols_selected]
+
+    # Keep a record of which predictors were retained (potentially useful after fitting resamples etc.)
+    vars_retained <-
+        info %>% dplyr::filter(role == 'predictor', !variable %in% remove_cols)
+
+    # keep_cols <- c(cols_selected, outcome_col)
+    step_FCBF_new(terms = x$terms, min_su = x$min_su, outcome = x$outcome,
+                  features_retained = vars_retained, role = x$role, trained = TRUE,
+                  removals = remove_cols, skip = x$skip, id = x$id)
 }
 
-# Bake method
+#' Bake method
+#' @importFrom recipes bake
+#' @export
 bake.step_FCBF <- function (object, new_data, ...) {
-    if (length(object$keep_cols) > 0)
-        new_data <- new_data[, object$keep_cols]
+    if (length(object$removals) > 0)
+        new_data <- new_data[, !colnames(new_data) %in% object$removals]
     as_tibble(new_data)
 }
 

@@ -8,9 +8,11 @@ step_FCBF(
   recipe,
   ...,
   min_su = 0.025,
+  outcome = NA,
+  features_retained = NA,
   role = NA,
   trained = FALSE,
-  keep_cols = NULL,
+  removals = NULL,
   skip = FALSE,
   id = rand_id("FCBF")
 )
@@ -18,15 +20,19 @@ step_FCBF(
 \arguments{
 \item{recipe}{A recipe object. The step will be added to the sequence of operations for this recipe.}
 
-\item{...}{Additional arguments such as selector functions, e.g. all_numeric_predictors(), all_outcomes()}
+\item{...}{Selector functions that specify which features should be considered by the FCBF.  e.g. all_numeric_predictors(), all_predictors()}
 
 \item{min_su}{Minimum threshold for symmetrical uncertainty. Lower values allow more features to be selected.}
+
+\item{outcome}{Outcome variable used for filter selection. If there is only one outcome variable in the recipe, it will automatically be detected. If multiple outcome variables exist, the user should specify it.}
+
+\item{features_retained}{Internal object that gives a record of which features were retained after FCBF. Should not be specified by the user.}
 
 \item{role}{Not used for this step since new variables are not created}
 
 \item{trained}{A logical to indicate if the quantities for preprocessing have been estimated.}
 
-\item{keep_cols}{Feature columns that will be retained. Used internally and should not be set by the user.}
+\item{removals}{Feature columns that will be removed. Used internally and should not be set by the user.}
 
 \item{skip}{A logical. Should the step be skipped when the recipe is baked by bake()? While all operations are baked when prep() is run, some operations may not be able to be conducted on new data (e.g. processing the outcome variable(s)). Care should be taken when using skip = TRUE as it may affect the computations for subsequent operations.}
 

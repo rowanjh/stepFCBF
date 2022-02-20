@@ -9,10 +9,11 @@ discretize_var <- function(vector){
 
 FCBF_helper <- function(preds, outcome, min_su){
     ### Takes a set of predictors, does FCBF for feature selection, and
-    ### returns the names of the columns to keep.
+    ### returns the names of the features to keep.
+
     preds <- preds %>% purrr::map_if(is.numeric, discretize_var) %>% as.data.frame
 
-    res <- fcbf(feature_table = preds, target_vector = outcome, minimum_su = min_su,
+    res <- FCBF::fcbf(feature_table = preds, target_vector = outcome, minimum_su = min_su,
                 verbose = FALSE, samples_in_rows = TRUE)
     return(res)
 }
