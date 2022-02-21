@@ -1,5 +1,5 @@
 Package: stepFCBF
-Title: Fast Correlation Based Filter for Feature Selection: 'tidymodels' Recipe Step Integration
+Title: Fast Correlation Based Filter (FCBF) for Feature Selection: A 'tidymodels' Recipe Step Integration
 Version: 0.0.0.9000
 Authors@R: 
     person("Rowan", "Jacques-Hamilton", , "rowan.jacques.hamilton@gmail.com", role = c("aut", "cre"),
