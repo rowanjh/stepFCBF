@@ -27,21 +27,23 @@
 #' @examples test
 #'
 #' @export
-step_FCBF <- function (recipe, ..., min_su = 0.025, outcome = NA, features_retained = NA,
-                       role = NA, trained = FALSE, removals = NULL, skip = FALSE, id = rand_id("FCBF")) {
+step_FCBF <- function (recipe, ..., min_su = 0.025, outcome = NA, n_cuts = 2,
+                       features_retained = NA, role = NA, trained = FALSE,
+                       removals = NULL, skip = FALSE, id = rand_id("FCBF")) {
 
     add_step(recipe, step_FCBF_new(terms = enquos(...), min_su = min_su,
-                                   outcome = outcome, features_retained = features_retained,
+                                   outcome = outcome, n_cuts = n_cuts,
+                                   features_retained = features_retained,
                                    role = role, trained = trained,
                                    removals = removals, skip = skip, id = id))
 }
 
-# Constructor (boilerplate code)
-step_FCBF_new <- function (terms, min_su, outcome, features_retained,
+# Constructor (boilerplate)
+step_FCBF_new <- function (terms, min_su, outcome, n_cuts, features_retained,
                            role, trained, removals, skip, id) {
     step(subclass = "FCBF", terms = terms, min_su = min_su, outcome = outcome,
-         features_retained = features_retained, role = role, trained = trained,
-         removals = removals, skip = skip, id = id)
+         n_cuts = n_cuts, features_retained = features_retained,
+         role = role, trained = trained, removals = removals, skip = skip, id = id)
 }
 
 

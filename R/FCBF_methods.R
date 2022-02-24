@@ -2,7 +2,7 @@
 #' @importFrom recipes prep
 #' @export
 #'
-prep.step_FCBF <- function (x, training, info = NULL, ...) {
+prep.step_FCBF <- function (x, training, info = NULL, ...){
     # Find outcome column
     if(!is.na(x$outcome)){
         if(class(x$outcome) != "character"){
@@ -15,7 +15,9 @@ prep.step_FCBF <- function (x, training, info = NULL, ...) {
     } else{
         outcome_col <- info %>% dplyr::filter(role == 'outcome') %>% dplyr::pull(variable)
         if(length(outcome_col)>1){
-            rlang::abort("step_FCBF found more than one outcome variable. Only a single outcome variable can be accepted by FCBF. Please supply the outcome variable using the outcome argument in step_FCBF")
+            rlang::abort(paste0("step_FCBF found more than one outcome variable.",
+            "Only a single outcome variable can be accepted by FCBF. Please",
+            "supply the outcome variable using the outcome argument in step_FCBF"))
         }
     }
     if(length(outcome_col)<1|is.na(outcome_col)){
@@ -31,7 +33,8 @@ prep.step_FCBF <- function (x, training, info = NULL, ...) {
     }
     fcbf_out <- FCBF_helper(preds = training[, pred_cols],
                             outcome = training[, outcome_col, drop = TRUE],
-                            min_su = x$min_su)
+                            min_su = x$min_su,
+                            n_cuts = n_cuts)
     cols_selected <- pred_cols[fcbf_out$index]
     if(length(cols_selected) == 1) print("Number of features selected =  1")
 
@@ -44,6 +47,7 @@ prep.step_FCBF <- function (x, training, info = NULL, ...) {
 
     # keep_cols <- c(cols_selected, outcome_col)
     step_FCBF_new(terms = x$terms, min_su = x$min_su, outcome = x$outcome,
+                  n_cuts = x$n_cuts,
                   features_retained = vars_retained, role = x$role, trained = TRUE,
                   removals = remove_cols, skip = x$skip, id = x$id)
 }
