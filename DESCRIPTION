@@ -5,8 +5,7 @@ Authors@R:
     person("Rowan", "Jacques-Hamilton", , "rowan.jacques.hamilton@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0003-2945-472X"))
 Description: Provides the step_FCBF function, which conducts  fast correlation based filter selection 
-             within a 'tidymodels' recipe. step_FCBF uses the bioconductor 'FCBF' package as the engine,
-             and integrates it within the 'tidymodels' framework.
+             within a 'tidymodels' recipe. step_FCBF uses the bioconductor 'FCBF' package as the engine.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

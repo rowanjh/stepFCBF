@@ -9,6 +9,7 @@ step_FCBF(
   ...,
   min_su = 0.025,
   outcome = NA,
+  cutpoint = 0.5,
   features_retained = NA,
   role = NA,
   trained = FALSE,

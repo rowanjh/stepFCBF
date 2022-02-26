@@ -2,6 +2,8 @@
 
 S3method(bake,step_FCBF)
 S3method(prep,step_FCBF)
+S3method(print,step_FCBF)
+export(required_pkgs.step_FCBF)
 export(step_FCBF)
 importFrom(recipes,bake)
 importFrom(recipes,prep)
