@@ -44,7 +44,7 @@ step_fcbf <- function (recipe, ..., min_su = 0.025, outcome = NA, cutpoint = 0.5
 # Constructor (boilerplate)
 step_fcbf_new <- function (terms, min_su, outcome, cutpoint, features_retained,
                            role, trained, removals, skip, id) {
-    step(subclass = "FCBF", terms = terms, min_su = min_su, outcome = outcome,
+    step(subclass = "fcbf", terms = terms, min_su = min_su, outcome = outcome,
          cutpoint = cutpoint, features_retained = features_retained,
          role = role, trained = trained, removals = removals, skip = skip, id = id)
 }
