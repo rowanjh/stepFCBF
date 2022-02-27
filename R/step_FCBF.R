@@ -7,6 +7,7 @@
 #' @param ... Selector functions that specify which features should be considered by the FCBF.  e.g. all_numeric_predictors(), all_predictors()
 #' @param min_su Minimum threshold for symmetrical uncertainty. Lower values allow more features to be selected.
 #' @param outcome Outcome variable used for filter selection. If there is only one outcome variable in the recipe, it will automatically be detected. If multiple outcome variables exist, the user should specify it.
+#' @param cutpoint Quantile value (0-1) describing how to split numeric features into binary nominal features. e.g. 0.5 = median split
 #' @param features_retained Internal object that gives a record of which features were retained after FCBF. Should not be specified by the user.
 #' @param role Not used for this step since new variables are not created
 #' @param trained A logical to indicate if the quantities for preprocessing have been estimated.
@@ -23,15 +24,14 @@
 #' @return Returns the recipe object, with step_fcbf added to the sequence of operations for this recipe.
 #' @references Yu, L. and Liu, H. (2003); Feature Selection for High-Dimensional Data A Fast Correlation Based Filter Solution, Proc. 20th Intl. Conf. Mach. Learn. (ICML-2003), Washington DC, 2003.
 #'
-#'
-#' @examples test
-#'
 #' @export
+#' @importFrom recipes rand_id add_step recipes_pkg_check
+#' @importFrom rlang enquos .data
 step_fcbf <- function (recipe, ..., min_su = 0.025, outcome = NA, cutpoint = 0.5,
                        features_retained = NA, role = NA, trained = FALSE,
                        removals = NULL, skip = FALSE, id = rand_id("FCBF")) {
     # Check for packages
-    recipes::recipes_pkg_check(required_pkgs.step_fcbf())
+    recipes_pkg_check(required_pkgs.step_fcbf())
 
     # Check arguments
     if(is.na(min_su)) rlang::abort("min_su must be a number between 0-1")
@@ -49,14 +49,18 @@ step_fcbf <- function (recipe, ..., min_su = 0.025, outcome = NA, cutpoint = 0.5
 }
 
 # Constructor (boilerplate)
+#' @importFrom recipes step
 step_fcbf_new <- function (terms, min_su, outcome, cutpoint, features_retained,
                            role, trained, removals, skip, id) {
     step(subclass = "fcbf", terms = terms, min_su = min_su, outcome = outcome,
-         cutpoint = cutpoint, features_retained = features_retained,
-         role = role, trained = trained, removals = removals, skip = skip, id = id)
+                  cutpoint = cutpoint, features_retained = features_retained,
+                  role = role, trained = trained, removals = removals, skip = skip, id = id)
 }
 
-#' @importFrom recipes prep
+#' @importFrom recipes prep recipes_eval_select
+#' @importFrom dplyr filter pull
+#' @importFrom magrittr %>%
+#' @importFrom rlang .data
 #' @export
 #'
 prep.step_fcbf <- function (x, training, info = NULL, ...){
@@ -76,7 +80,7 @@ prep.step_fcbf <- function (x, training, info = NULL, ...){
     } else{
         print(paste0("Outcome not supplied in step_fcbf() argument. Automatically ",
                      "finding outcome from recipe specification"))
-        outcome_col <- info %>% dplyr::filter(role == 'outcome') %>% dplyr::pull(variable)
+        outcome_col <- info %>% filter(role == 'outcome') %>% pull(variable)
         if(length(outcome_col)>1){
             rlang::abort(paste0("step_fcbf found more than one outcome variable.",
                                 "Only a single outcome variable can be accepted by FCBF. Please",
@@ -122,7 +126,7 @@ prep.step_fcbf <- function (x, training, info = NULL, ...){
 
     # Keep list of which predictors were retained (potentially useful for user)
     feats_retained <-
-        info %>% dplyr::filter(role == 'predictor', !variable %in% remove_cols)
+        info %>% filter(.data$role == 'predictor', !.data$variable %in% remove_cols)
 
     # keep_cols <- c(cols_selected, outcome_col)
     step_fcbf_new(terms = x$terms, min_su = x$min_su, outcome = x$outcome,
@@ -132,6 +136,7 @@ prep.step_fcbf <- function (x, training, info = NULL, ...){
 }
 
 #' @importFrom recipes bake
+#' @importFrom tibble as_tibble
 #' @export
 bake.step_fcbf <- function (object, new_data, ...) {
     if (length(object$removals) > 0)
@@ -141,6 +146,7 @@ bake.step_fcbf <- function (object, new_data, ...) {
 }
 
 #' @export
+#' @importFrom recipes print_step
 print.step_fcbf <- function (x, width = max(20, options()$width - 36), ...){
     if(x$trained){
         title <- "FCBF retained : "

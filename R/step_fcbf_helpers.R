@@ -6,7 +6,7 @@ discretize_var <- function(numeric_feat, cutpoint){
     if(!is.numeric(numeric_feat)){
         rlang::abort("Feature must be numeric to discretize")
     }
-    cut <- quantile(numeric_feat, cutpoint, na.rm = TRUE)
+    cut <- stats::quantile(numeric_feat, cutpoint, na.rm = TRUE)
     results <- rep(NA, length(numeric_feat)) # initialize all as NA
     results[numeric_feat <= cut] <- 'l' # below cut as 'low'
     results[numeric_feat > cut] <- 'h' # set values above cut as 'high'

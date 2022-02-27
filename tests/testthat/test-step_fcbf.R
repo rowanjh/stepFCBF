@@ -1,3 +1,4 @@
+library(recipes)
 test_that("basic usage: expected columns retrieved", {
     data(iris)
     my_iris <- iris

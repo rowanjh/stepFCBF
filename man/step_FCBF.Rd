@@ -27,6 +27,8 @@ step_fcbf(
 
 \item{outcome}{Outcome variable used for filter selection. If there is only one outcome variable in the recipe, it will automatically be detected. If multiple outcome variables exist, the user should specify it.}
 
+\item{cutpoint}{Quantile value (0-1) describing how to split numeric features into binary nominal features. e.g. 0.5 = median split}
+
 \item{features_retained}{Internal object that gives a record of which features were retained after FCBF. Should not be specified by the user.}
 
 \item{role}{Not used for this step since new variables are not created}
@@ -51,10 +53,6 @@ step_fcbf takes a range of features (e.g. the full feature set) and selects a su
 FCBF selects features to simultaneously minimize correlation between features and maximise correlations between the features and the target. FCBF only works with categorical features, so continuous features must first be discretized. By default this is based on a median split (i.e. splitting continuous variables into 'high' versus 'low'), but the method may be customized in the internal function 'discretize_var'.
 
 #' Code to implement the FCBF algorithm is driven by Bioconductor package FCBF. step_fcbf provides wrappers that allow it to be used within the tidymodels framework
-}
-\examples{
-test
-
 }
 \references{
 Yu, L. and Liu, H. (2003); Feature Selection for High-Dimensional Data A Fast Correlation Based Filter Solution, Proc. 20th Intl. Conf. Mach. Learn. (ICML-2003), Washington DC, 2003.
