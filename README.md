@@ -19,13 +19,13 @@ Solution,Proc. 20th Intl. Conf. Mach. Learn. (ICML-2003), Washington DC,
 ##### Discretization
 
 step_fcbf can handle both nominal and numeric features. However, the
-FCBF algorithm can only handle nominal features, so numeric features
-first need to be discretized. step_fcbf function internally converts
-numeric features to binary variables, using a median split by default
-(other quantiles between 0-1 can be provided with the ‘cutpoint =’
-argument). Discretization is only used within the feature selection
-algorithm, the numeric version of the feature is retained for further
-processing and modeling.
+underlying FCBF algorithm can only handle nominal features, so numeric
+features first need to be discretized. step_fcbf function internally
+converts numeric features to binary nominal features, using a median
+split by default (other quantiles between 0-1 can be provided with the
+‘cutpoint =’ argument). Discretization is only used within the feature
+selection algorithm, once features have been selected the numeric
+version of the feature is retained for further processing and modeling.
 
 ##### Symmetric Uncertainty Threshold
 
@@ -73,22 +73,7 @@ prepped_recipe <- my_recipe %>% prep(iris)
 #> [1] "Number of prospective features =  4"
 #> [1] "Number of final features =  2"
 
-iris_baked <- prepped_recipe %>% bake(iris)
-```
-
-``` r
-# Original variables
-names(iris)
-#> [1] "Sepal.Length" "Sepal.Width"  "Petal.Length" "Petal.Width"  "Species"
-# Variables remaining after feature selection
-names(iris_baked)
-#> [1] "Sepal.Width" "Petal.Width" "Species"
-```
-
-Alternatively:
-
-``` r
-# Original variables
+# Original features
 prepped_recipe$var_info
 #> # A tibble: 5 x 4
 #>   variable     type    role      source  
@@ -99,7 +84,7 @@ prepped_recipe$var_info
 #> 4 Petal.Width  numeric predictor original
 #> 5 Species      nominal outcome   original
 
-# Selected variables
+# Selected features
 prepped_recipe$term_info
 #> # A tibble: 3 x 4
 #>   variable    type    role      source  
