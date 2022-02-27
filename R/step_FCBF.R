@@ -30,9 +30,16 @@
 step_fcbf <- function (recipe, ..., min_su = 0.025, outcome = NA, cutpoint = 0.5,
                        features_retained = NA, role = NA, trained = FALSE,
                        removals = NULL, skip = FALSE, id = rand_id("FCBF")) {
-    # Check arguments
-
+    # Check for packages
     recipes::recipes_pkg_check(required_pkgs.step_fcbf())
+
+    # Check arguments
+    if(is.na(min_su)) rlang::abort("min_su must be a number between 0-1")
+    if(is.na(cutpoint)) rlang::abort("cutpoint must be a number between 0-1")
+    if(!is.numeric(min_su) | min_su >= 1 | min_su <= 0)
+        rlang::abort("min_su must be a number between 0-1")
+    if(!is.numeric(cutpoint) | cutpoint >= 1 | cutpoint <= 0)
+        rlang::abort("cutpoint must be a number between 0-1")
 
     add_step(recipe, step_fcbf_new(terms = enquos(...), min_su = min_su,
                                    outcome = outcome, cutpoint = cutpoint,
@@ -53,16 +60,22 @@ step_fcbf_new <- function (terms, min_su, outcome, cutpoint, features_retained,
 #' @export
 #'
 prep.step_fcbf <- function (x, training, info = NULL, ...){
-    # Find outcome column
+    ## Find outcome column
+    if(length(x$outcome) > 1){
+        rlang::abort("Only a single outcome variable can be supplied for step_fcbf")
+    }
     if(!is.na(x$outcome)){
         if(class(x$outcome) != "character"){
             rlang::abort("Outcome variable for step_fcbf must be supplied as a character string")
         }
-        if(length(x$outcome) > 1){
-            rlang::abort("Only a single outcome variable can be supplied for step_fcbf")
+        if(!x$outcome %in% names(training)){
+            rlang::abort(paste0("Outcome variable '", x$outcome, "' not found"))
         }
         outcome_col <- x$outcome
+        print(paste0("Outcome variable for FCBF set to: ", x$outcome))
     } else{
+        print(paste0("Outcome not supplied in step_fcbf() argument. Automatically ",
+                     "finding outcome from recipe specification"))
         outcome_col <- info %>% dplyr::filter(role == 'outcome') %>% dplyr::pull(variable)
         if(length(outcome_col)>1){
             rlang::abort(paste0("step_fcbf found more than one outcome variable.",
@@ -70,35 +83,51 @@ prep.step_fcbf <- function (x, training, info = NULL, ...){
                                 "supply the outcome variable using the outcome argument in step_fcbf"))
         }
     }
-    if(length(outcome_col)<1|is.na(outcome_col)){
-        rlang::abort(paste("An outcome varaible was not found by step_fcbf. Please",
+    if(length(outcome_col)<1){
+        rlang::abort(paste("An outcome variable was not found by step_fcbf. Please",
                            "ensure an outcome variable is specified."))
     }
-    # Get predictor columns to be used in FCBF
-    pred_cols <- recipes_eval_select(x$terms, training, info)
 
-    if (length(pred_cols) <= 1) {
-        # this message is not given by FCBF::fcbf when only 1 predictor is selected by the filter
-        rlang::warn("Fewer than two predictors were supplied to step_fcbf, FCBF will not be conducted")
+
+    ## Get predictor columns to be provided to FCBF algorithm
+    # Extract predictor columns selected by user or tidyselect functions
+    preds_input <- recipes_eval_select(x$terms, training, info)
+
+    # Exclude any columns full of NA values (can break FCBF function)
+    preds_fcbf <- remove_NA_cols(preds_input, training)
+
+    # Catch any issues that may break the FCBF code
+    if (length(preds_fcbf) == 1) {
+        # A message is not given by FCBF::fcbf when only 1 predictor is
+        # provided to the filter.
+        rlang::warn(paste0("Only one usable predictor was supplied to ",
+                            "step_fcbf. FCBF may have unexpected results."))
+    } else if (length(preds_fcbf) == 0){
+        rlang::abort(paste0("No usable predictors were supplied to step_fcbf."))
     }
-    fcbf_out <- FCBF_helper(preds = training[, pred_cols],
+
+    ## Run FCBF
+    fcbf_out <- FCBF_helper(preds = training[, preds_fcbf, drop = FALSE],
                             outcome = training[, outcome_col, drop = TRUE],
                             min_su = x$min_su,
                             cutpoint = x$cutpoint)
-    cols_selected <- pred_cols[fcbf_out$index]
+
+    cols_selected <- preds_fcbf[fcbf_out$index]
+
+    # The "Number of features selected" message isn't given by FCBF when ncol = 1
     if(length(cols_selected) == 1) print("Number of features selected =  1")
 
     # Specify which cols to remove from the training set
-    remove_cols <- pred_cols[!pred_cols %in% cols_selected]
+    remove_cols <- preds_input[!preds_input %in% cols_selected]
 
-    # Keep a record of which predictors were retained (potentially useful after fitting resamples etc.)
-    vars_retained <-
+    # Keep list of which predictors were retained (potentially useful for user)
+    feats_retained <-
         info %>% dplyr::filter(role == 'predictor', !variable %in% remove_cols)
 
     # keep_cols <- c(cols_selected, outcome_col)
     step_fcbf_new(terms = x$terms, min_su = x$min_su, outcome = x$outcome,
                   cutpoint = x$cutpoint,
-                  features_retained = vars_retained, role = x$role, trained = TRUE,
+                  features_retained = feats_retained, role = x$role, trained = TRUE,
                   removals = remove_cols, skip = x$skip, id = x$id)
 }
 
@@ -113,11 +142,14 @@ bake.step_fcbf <- function (object, new_data, ...) {
 
 #' @export
 print.step_fcbf <- function (x, width = max(20, options()$width - 36), ...){
-    title <- "FCBF retained : "
-    print_step(x$features_retained$variable, x$terms, x$trained, title, width)
-    title <- "FCBF removed: "
-    print_step(x$removals, x$terms, x$trained, title, width)
-
+    if(x$trained){
+        title <- "FCBF retained : "
+        print_step(x$features_retained$variable, x$terms, x$trained, title, width)
+        title <- "FCBF removed: "
+        print_step(x$removals, x$terms, x$trained, title, width)
+    } else {
+        print_step(untr_obj = x$terms, title = "FCBF applied to features: ", width = width)
+    }
     invisible(x)
 }
 
