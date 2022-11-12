@@ -51,7 +51,8 @@ website](https://www.bioconductor.org/packages/release/bioc/html/FCBF.html)
 for more detailed installation instructions:
 
 ``` r
-remotes::install_bioc("FCBF")
+# install.packages("BiocManager")
+BiocManager::install("FCBF")
 ```
 
 ## Examples
