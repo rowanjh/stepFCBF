@@ -41,8 +41,8 @@ You can install the development version of stepFCBF from
 [GitHub](https://github.com/) with:
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("rowanjh/stepFCBF")
+# install.packages("remotes")
+remotes::install_github("rowanjh/stepFCBF")
 ```
 
 stepFCBF depends on the bioconductor package “FCBF”. Run the below code
@@ -51,7 +51,7 @@ website](https://www.bioconductor.org/packages/release/bioc/html/FCBF.html)
 for more detailed installation instructions:
 
 ``` r
-BiocManager::install("FCBF")
+remotes::install_bioc("FCBF")
 ```
 
 ## Examples
