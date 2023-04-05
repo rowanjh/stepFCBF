@@ -1,6 +1,7 @@
 
 # stepFCBF package
 
+**NOTE: the stepFCBF package is depreciated. The stepFCBF function is now a part of the Colino library https://github.com/stevenpawley/colino**
 ## Introduction
 
 Provides the step_fcbf function, which allows fast correlation based
